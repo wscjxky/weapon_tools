@@ -40,12 +40,17 @@ def set_label(filename, value):
         label.text = value
     inputfile.write(filename)
 
-#
-# dir = "E:\标注汇总/fengyi\战斗机\label"
-# files = glob.glob(dir + '/*.xml')
-# for f in files:
-#     inputfile = ET.parse(f)
-#     root = inputfile.getroot()
-#     label = get_label(root)
-#     print(label)
-#     set_label(f, "ZhanDouJi")
+import re
+dirname = "C:/Users/KirinNg/Desktop/Label_work_space/Working_Space_S.Wu_5-20"
+for roots, dirs, files in os.walk(dirname):
+        for file in files:
+            if file.endswith('xml'):
+                label_name=roots.split('\\')
+                label_name=(label_name[-1])
+                path = roots + os.sep + file
+                inputfile = ET.parse(path)
+                root = inputfile.getroot()
+                label = get_label(root)
+                print(path)
+                print(label)
+                set_label(path, label_name)
