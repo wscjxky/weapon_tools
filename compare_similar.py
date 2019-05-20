@@ -81,11 +81,10 @@ import PIL.Image as Image
 import os
 import glob
 
-dis_txt = 'daer_data.txt'
 
 
-def gen_files_distance(dirname):
-    with open(dis_txt, 'w') as f_w:
+def gen_files_distance(dirname,filename):
+    with open(filename, 'w',encoding='utf8') as f_w:
         for roots, dirs, files in os.walk(dirname):
             for file in files:
                 path = roots + os.sep + file
@@ -96,14 +95,14 @@ def gen_files_distance(dirname):
                         f_w.write("%s,%s\n" % (path, hash))
                 except Exception as e:
                     print(e)
-                    os.remove(path)
+                    # os.remove(path)
                     pass
 
 
 def cal_files_distance(source_filename,target_filename):
     count = 0
-    with open(source_filename, 'r')as fs_r:
-        with open(target_filename, 'r')as ft_r:
+    with open(source_filename, 'r',encoding='utf8')as fs_r:
+        with open(target_filename, 'r',encoding='utf8')as ft_r:
             ls_r = fs_r.readlines()
             lt_r=ft_r.readlines()
             for s in ls_r:
@@ -122,15 +121,15 @@ def cal_files_distance(source_filename,target_filename):
                             print(filename_s)
                             print(filename_t)
                             os.remove(filename_t)
-                        except:
-                            print(filename_t+'e')
+                        except Exception as e:
+                            print(e)
                             pass
 
     print(count)
 
 def compare_self_distance(filename):
     count = 0
-    with open(filename, 'r')as fs_r:
+    with open(filename, 'r',encoding='utf8')as fs_r:
             ls_r = fs_r.readlines()
             for index,s in enumerate(ls_r):
                 for t in ls_r[index+1:]:
@@ -148,13 +147,17 @@ def compare_self_distance(filename):
                             print(filename_s)
                             print(filename_t)
                             os.remove(filename_t)
-                        except:
-                            print(filename_t + 'e')
+                        except Exception as e:
+                            print(e)
                             pass
 
+source_txt = 'all_already_data.txt'
+target_txt = 'no_already_data.txt'
 
-gen_files_distance('E:\daer_data')
+
+gen_files_distance('E:\标注汇总',source_txt)
+gen_files_distance('E:\未标注',target_txt)
+
 # source_txt='already_files_dis.txt'
-# target_txt='daer_data.txt'
 # cal_files_distance(source_txt,target_txt)
 # compare_self_distance(target_txt)
