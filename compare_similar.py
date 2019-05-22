@@ -1,3 +1,6 @@
+from PIL import ImageFile
+
+
 class DHash(object):
     @staticmethod
     def calculate_hash(image):
@@ -80,11 +83,15 @@ class DHash(object):
 import PIL.Image as Image
 import os
 import glob
+from redis import StrictRedis, ConnectionPool
+
+pool = ConnectionPool(host='123.56.19.49', password='wscjxky123', port=6379, db=15, decode_responses=True)
+redis = StrictRedis(connection_pool=pool)
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
-
-def gen_files_distance(dirname,filename):
-    with open(filename, 'w',encoding='utf8') as f_w:
+def gen_files_distance(dirname, filename):
+    with open(filename, 'w', encoding='utf8') as f_w:
         for roots, dirs, files in os.walk(dirname):
             for file in files:
                 path = roots + os.sep + file
@@ -99,40 +106,38 @@ def gen_files_distance(dirname,filename):
                     pass
 
 
-def cal_files_distance(source_filename,target_filename):
+img_type = ['JPEG', 'png', 'jpg', 'jpeg', 'JPG', 'PNG']
+
+def gen_redis_distance(dirname, key_head="Source_Dhash:"):
     count = 0
-    with open(source_filename, 'r',encoding='utf8')as fs_r:
-        with open(target_filename, 'r',encoding='utf8')as ft_r:
+    for roots, dirs, files in os.walk(dirname):
+        for file in files:
+            path = roots + os.sep + file
+            is_exist = redis.get(key_head + path)
+            if is_exist is None:
+                if file[-3:] in img_type or file[-4:] in img_type:
+                    try:
+                        if count % 1000 == 0:
+                            print(count)
+                        count += 1
+                        image = Image.open(path)
+                        hash = DHash.calculate_hash(image)
+                        redis.sadd("source",hash)
+                        # redis.set(key_head + path, hash)
+                    except OSError as e:
+                        print(e)
+                        pass
+                        # os.remove(path)
+
+
+def cal_files_distance(source_filename, target_filename):
+    count = 0
+    with open(source_filename, 'r', encoding='utf8')as fs_r:
+        with open(target_filename, 'r', encoding='utf8')as ft_r:
             ls_r = fs_r.readlines()
-            lt_r=ft_r.readlines()
+            lt_r = ft_r.readlines()
             for s in ls_r:
                 for t in lt_r:
-                    filename_s=s.split(',')[0]
-                    filename_s_hash=s.split(',')[1]
-                    filename_t=t.split(',')[0]
-                    filename_t_hash=t.split(',')[1]
-                    # try:
-                    #     distance = DHash.hamming_distance(filename_s_hash, filename_t_hash)
-                    # except:
-                    #     pass
-                    # if distance == 0:
-                    if filename_s_hash==filename_t_hash:
-                        try:
-                            print(filename_s)
-                            print(filename_t)
-                            os.remove(filename_t)
-                        except Exception as e:
-                            print(e)
-                            pass
-
-    print(count)
-
-def compare_self_distance(filename):
-    count = 0
-    with open(filename, 'r',encoding='utf8')as fs_r:
-            ls_r = fs_r.readlines()
-            for index,s in enumerate(ls_r):
-                for t in ls_r[index+1:]:
                     filename_s = s.split(',')[0]
                     filename_s_hash = s.split(',')[1]
                     filename_t = t.split(',')[0]
@@ -151,13 +156,78 @@ def compare_self_distance(filename):
                             print(e)
                             pass
 
+    print(count)
+
+
+def cal_redis_distance(source_filename, target_filename):
+    count = 0
+    keys_source = redis.keys(source_filename + "*")
+    keys_target = redis.keys(target_filename + "*")
+    print('add')
+    s_hash_arr = redis.mget(keys_source)
+    t_hash_arr = redis.mget(keys_target)
+    print(s_hash_arr[0])
+
+    for t_index, t_hash in enumerate(t_hash_arr):
+        if count % 1000 == 0:
+            print(count)
+        count += 1
+        try:
+            find_result = s_hash_arr.index(t_hash)
+        except:
+            continue
+        if find_result:
+            try:
+                source_filename = (keys_source[find_result])[len('Target_Dhash:'):]
+                target_filename = (keys_target[t_index])[len('Target_Dhash:'):]
+                # os.remove(target_filename)
+                print(source_filename)
+                print(target_filename)
+                if target_filename[:-4] in img_type:
+                    print(target_filename)
+                    # 删除相应的xml
+                    os.remove(target_filename[:-4]+'xml')
+
+            except Exception as e:
+                print(e)
+                pass
+
+
+def compare_self_distance(filename):
+    count = 0
+    with open(filename, 'r', encoding='utf8')as fs_r:
+        ls_r = fs_r.readlines()
+        for index, s in enumerate(ls_r):
+            for t in ls_r[index + 1:]:
+                filename_s = s.split(',')[0]
+                filename_s_hash = s.split(',')[1]
+                filename_t = t.split(',')[0]
+                filename_t_hash = t.split(',')[1]
+                # try:
+                #     distance = DHash.hamming_distance(filename_s_hash, filename_t_hash)
+                # except:
+                #     pass
+                # if distance == 0:
+                if filename_s_hash == filename_t_hash:
+                    try:
+                        print(filename_s)
+                        print(filename_t)
+                        os.remove(filename_t)
+                    except Exception as e:
+                        print(e)
+                        pass
+
+
 source_txt = 'all_already_data.txt'
 target_txt = 'no_already_data.txt'
-
-
-gen_files_distance('E:\标注汇总',source_txt)
-gen_files_distance('E:\未标注',target_txt)
+target_txt='a.txt'
+gen_redis_distance('E:\标注汇总v1')
+# gen_redis_distance('E:\未标注','Target_Dhash:')
+# cal_redis_distance('Source_Dhash:', 'Source_Dhash:')
 
 # source_txt='already_files_dis.txt'
 # cal_files_distance(source_txt,target_txt)
+# gen_files_distance('D:\pycharmproject\download_images_new',target_txt)
 # compare_self_distance(target_txt)
+cal_files_distance(source_txt,target_txt)
+
