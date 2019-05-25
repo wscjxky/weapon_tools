@@ -31,10 +31,13 @@ def walk_dirs(dirname):
 
                 except Exception as e:
                     print(e)
-                    print(xml_file)
+                    print(path)
+                    # os.remove(path)
                     pass
     print(count)
-    print(label_dict)
+    for i in label_dict.values():
+        print(i)
+    b = sum(label_dict.values())
+    print(b)
+walk_dirs('E:\标注汇总v2')
 
-# 装甲车 战斗机 拖拉机 坦克 客机 导弹
-walk_dirs('E:\标注汇总v1')

@@ -1,3 +1,6 @@
+import shutil
+
+import threadpool
 from PIL import ImageFile
 
 
@@ -88,25 +91,36 @@ from redis import StrictRedis, ConnectionPool
 pool = ConnectionPool(host='123.56.19.49', password='wscjxky123', port=6379, db=15, decode_responses=True)
 redis = StrictRedis(connection_pool=pool)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+img_type = ['.JPEG', '.png', '.jpg', '.jpeg', '.JPG', '.PNG']
 
 
 def gen_files_distance(dirname, filename):
+    count = 0
     with open(filename, 'w', encoding='utf8') as f_w:
         for roots, dirs, files in os.walk(dirname):
+            if '\\label' in roots:
+                continue
             for file in files:
                 path = roots + os.sep + file
                 try:
-                    if path.endswith('.jpeg') or path.endswith('.png') or path.endswith('.jpg'):
-                        image = Image.open(path)
-                        hash = DHash.calculate_hash(image)
-                        f_w.write("%s,%s\n" % (path, hash))
+                    file_type = os.path.splitext(file)[-1]
+                    f_w.write("%s\n" % os.path.splitext(file)[0])
+                    if file_type in img_type:
+                        xmls = os.listdir(roots + "/../label")
+                        # 删除没有标签的图片
+                        if file[:-len(file_type)] + '.xml' not in xmls:
+                            count += 1
+                            print(path)
+                            # os.remove(path)
+                            # os.remove(file)
+                            continue
+
+
                 except Exception as e:
                     print(e)
-                    # os.remove(path)
                     pass
+    print(count)
 
-
-img_type = ['JPEG', 'png', 'jpg', 'jpeg', 'JPG', 'PNG']
 
 def gen_redis_distance(dirname, key_head="Source_Dhash:"):
     count = 0
@@ -122,7 +136,7 @@ def gen_redis_distance(dirname, key_head="Source_Dhash:"):
                         count += 1
                         image = Image.open(path)
                         hash = DHash.calculate_hash(image)
-                        redis.sadd("source",hash)
+                        redis.sadd("source", hash)
                         # redis.set(key_head + path, hash)
                     except OSError as e:
                         print(e)
@@ -186,7 +200,7 @@ def cal_redis_distance(source_filename, target_filename):
                 if target_filename[:-4] in img_type:
                     print(target_filename)
                     # 删除相应的xml
-                    os.remove(target_filename[:-4]+'xml')
+                    os.remove(target_filename[:-4] + 'xml')
 
             except Exception as e:
                 print(e)
@@ -218,16 +232,72 @@ def compare_self_distance(filename):
                         pass
 
 
-source_txt = 'all_already_data.txt'
-target_txt = 'no_already_data.txt'
-target_txt='a.txt'
-gen_redis_distance('E:\标注汇总v1')
-# gen_redis_distance('E:\未标注','Target_Dhash:')
-# cal_redis_distance('Source_Dhash:', 'Source_Dhash:')
+def gen_labels_imgs(dirname):
+    xml_files = open("DODW_arguement/DODW_xmls.txt", 'w', encoding='utf8')
+    img_files = open("DODW_arguement/DODW_imgs.txt", 'w', encoding='utf8')
+    img_distance = open("DODW_arguement/DODW_distance.txt", 'w', encoding='utf8')
 
-# source_txt='already_files_dis.txt'
-# cal_files_distance(source_txt,target_txt)
-# gen_files_distance('D:\pycharmproject\download_images_new',target_txt)
-# compare_self_distance(target_txt)
-cal_files_distance(source_txt,target_txt)
+    for root, dirs, files in os.walk(dirname):
+        for file in files:
+            try:
+                path = root + '/' + file
+                path = path.replace('\\', '/')
+                if os.path.splitext(path)[-1] in img_type:
+                    img_files.write(path + "\n")
+                    img_distance.write("%s\n" % os.path.splitext(file)[0])
 
+                if file.endswith('.xml'):
+                    xml_files.write(path + "\n")
+            except:
+                print(file)
+                pass
+
+
+def is_not_exist_mkdir(dirname):
+    try:
+        if not os.path.isdir(dirname):
+            os.mkdir(dirname)
+    except :
+        pass
+
+def copy_img(img,xml,label):
+    # is_not_exist_mkdir('E:\DODW_v2/' + label)
+    # is_not_exist_mkdir('E:\DODW_v2/' + label + '/img/')
+    # is_not_exist_mkdir('E:\DODW_v2/' + label + '/label/')
+    shutil.copy(img, 'E:\DODW_v2/' + label + '/img/')
+    # shutil.copy(xml, 'E:\DODW_v2/' + label + '/label/')
+def copy_by_files():
+    xml_files = open("DODW_arguement/DODW_xmls.txt", 'r', encoding='utf8')
+    img_files = open("DODW_arguement/DODW_imgs.txt", 'r', encoding='utf8')
+    img_distance = open("DODW_arguement/DODW_distance.txt", 'r', encoding='utf8')
+    imgs = img_files.readlines()
+    xmls = xml_files.readlines()
+    lenth=len(xmls)
+    assert lenth==len(imgs)
+    params=[]
+    for index, img in enumerate(imgs):
+        img = img.strip('\n')
+        xml = xmls[index].strip('\n')
+        label =img.split('/')[-3]
+        params.append(((img,xml,label), None))
+    print(params)
+    pool = threadpool.ThreadPool(500)
+    requests = threadpool.makeRequests(copy_img,params)
+    [pool.putRequest(req) for req in requests]
+    pool.wait()
+    # img.split('/')[-3]
+    # is_not_exist_mkdir('E:\DODW_v2/' + label)
+    # is_not_exist_mkdir('E:\DODW_v2/' + label + '/img/')
+    # is_not_exist_mkdir('E:\DODW_v2/' + label + '/label/')
+    # shutil.copy(img, 'E:\DODW_v2/' + label + '/img/')
+    # shutil.copy(xml, 'E:\DODW_v2/' + label + '/label/')
+
+
+if __name__ == '__main__':
+    source_txt = 'DODW_v2_DHASH.txt'
+    target_txt = 'no_already_data.txt'
+    target_txt = 'a.txt'
+    # gen_labels_imgs('E:\标注汇总v2')
+    gen_labels_imgs('E:\标注汇总v2')
+    # gen_files_distance('E:\标注汇总v2', source_txt)
+    copy_by_files()
