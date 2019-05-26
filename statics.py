@@ -35,9 +35,12 @@ def walk_dirs(dirname):
                     # os.remove(path)
                     pass
     print(count)
+    for i in label_dict.keys():
+        print(i, end=' ')
     for i in label_dict.values():
-        print(i)
+        print(i,end=' ')
     b = sum(label_dict.values())
     print(b)
-walk_dirs('E:\标注汇总v2')
 
+walk_dirs('E:\标注汇总v2')
+1901 2628 2592 1700 893 3173‬ 2371 3953 2327 2481 2813 2794 3490 2838 3561 2177 3440 3244 2315 2684

@@ -276,15 +276,19 @@ def copy_by_files():
     assert lenth==len(imgs)
     params=[]
     for index, img in enumerate(imgs):
+        if index%200==0:
+            print(index)
         img = img.strip('\n')
         xml = xmls[index].strip('\n')
         label =img.split('/')[-3]
-        params.append(((img,xml,label), None))
-    print(params)
-    pool = threadpool.ThreadPool(500)
-    requests = threadpool.makeRequests(copy_img,params)
-    [pool.putRequest(req) for req in requests]
-    pool.wait()
+        if not os.path.isfile(img):
+            copy_img(img,xml,label)
+        # params.append(((img,xml,label), None))
+    # print(params)
+    # pool = threadpool.ThreadPool(500)
+    # requests = threadpool.makeRequests(copy_img,params)
+    # [pool.putRequest(req) for req in requests]
+    # pool.wait()
     # img.split('/')[-3]
     # is_not_exist_mkdir('E:\DODW_v2/' + label)
     # is_not_exist_mkdir('E:\DODW_v2/' + label + '/img/')
@@ -298,6 +302,6 @@ if __name__ == '__main__':
     target_txt = 'no_already_data.txt'
     target_txt = 'a.txt'
     # gen_labels_imgs('E:\标注汇总v2')
-    gen_labels_imgs('E:\标注汇总v2')
+    # gen_labels_imgs('E:\标注汇总v2')
     # gen_files_distance('E:\标注汇总v2', source_txt)
     copy_by_files()

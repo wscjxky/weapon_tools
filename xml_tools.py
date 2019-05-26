@@ -144,5 +144,7 @@ def imagenet_to_ourlabel():
 
 if __name__ == '__main__':
     pass
+    # for i in os.listdir('E:\已标注\沈楠\ZhiShengFeiJi\label'):
+    #     set_label('E:\已标注\沈楠\ZhiShengFeiJi\label/'+i,'ZhiShengFeiJi')
     # imagenet_to_me()
 # main()
