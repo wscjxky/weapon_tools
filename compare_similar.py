@@ -301,7 +301,8 @@ if __name__ == '__main__':
     source_txt = 'DODW_v2_DHASH.txt'
     target_txt = 'no_already_data.txt'
     target_txt = 'a.txt'
+
     # gen_labels_imgs('E:\标注汇总v2')
     # gen_labels_imgs('E:\标注汇总v2')
-    # gen_files_distance('E:\标注汇总v2', source_txt)
-    copy_by_files()
+    gen_files_distance('E:\标注汇总v2', source_txt)
+    # copy_by_files()
