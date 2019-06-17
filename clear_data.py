@@ -57,6 +57,8 @@ def compare_distance(dirname):
                         os.remove(path)
                     except:
                         pass
+                except Exception as e:
+                    print(e)
             else:
                 print(path)
                 os.remove(path)
@@ -70,4 +72,4 @@ def compare_distance(dirname):
     #         f.write(e+'\n')
     #
 # print(gen_redis_distance('D:\pycharmproject\download_images'))
-print(compare_distance('D:\pycharmproject\download_images'))
+print(compare_distance('D:\pycharmproject\download_images\未分配'))
