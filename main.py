@@ -178,9 +178,9 @@ class ImgSimilar():
                     pass
 
 
-source_root = 'E:/DODW_v1'
-iter_file = IterFile(source_root)
-# imgsim = ImgSimilar('E:\标注汇总v2')
-# imgsim.gen_distance_set()
+source_root = 'E:\数据采集\download_images\未分配'
+# iter_file = IterFile(source_root)
+imgsim = ImgSimilar(source_root)
+imgsim.gen_distance_set()
 # pro_folder = ProcessFolder('E:\标注汇总v2')
 # pro_folder.copy_files_to_one_folder()
